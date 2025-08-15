@@ -1,0 +1,11 @@
+{
+  "name": "trueplace",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm -C backend dev",
+    "dev:frontend": "pnpm -C frontend dev",
+    "dev:preview": "pnpm -C frontend build && python3 -m http.server -d frontend/dist 5176",
+    "dev:all": "pnpm -C backend dev & pnpm -C frontend dev"
+  }
+}
+

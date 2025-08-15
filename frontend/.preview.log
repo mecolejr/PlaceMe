@@ -1,0 +1,7 @@
+
+> trueplace-frontend@0.1.0 preview /Users/1stowner/Projects/trueplace/frontend
+> vite preview --port 5173 --strictPort "--port" "5174" "--strictPort"
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help

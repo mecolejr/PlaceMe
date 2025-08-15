@@ -1,0 +1,4 @@
+name,state,violent_rate,property_rate
+Texas,TX,0.35,0.55
+California,CA,0.30,0.50
+New York,NY,0.28,0.45

@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Location {
+  id              Int     @id @default(autoincrement())
+  name            String
+  state           String
+  crimeRate       Float?
+  hateCrimeIndex  Float?
+  diversityIndex  Float?
+
+  @@unique([name, state], name: "name_state")
+
+  // Relations
+  hateCrimes   HateCrime[]
+  crimeStats   CrimeStats[]
+  demographics Demographics[]
+}
+
+model HateCrime {
+  id         Int    @id @default(autoincrement())
+  locationId Int
+  biasType   String
+  incidents  Int
+
+  location   Location @relation(fields: [locationId], references: [id])
+
+  @@unique([locationId, biasType])
+}
+
+model CrimeStats {
+  id           Int    @id @default(autoincrement())
+  locationId   Int
+  violentRate  Float?
+  propertyRate Float?
+
+  location     Location @relation(fields: [locationId], references: [id])
+
+  @@unique([locationId])
+}
+
+model Demographics {
+  id           Int    @id @default(autoincrement())
+  locationId   Int
+  diversity    Float?
+  // Optional JSON for group shares (e.g., {"group":"share"})
+  groupShares  Json?
+
+  location     Location @relation(fields: [locationId], references: [id])
+
+  @@unique([locationId])
+}
+
