@@ -228,11 +228,11 @@ export default function App() {
         <label>Min community: <input style={{ width: 60 }} type="number" min={0} max={100} value={minCommunity} onChange={(e) => setMinCommunity(e.target.value === '' ? '' : Number(e.target.value))} /></label>
         <label>Sort by: <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}><option value="score">Score</option><option value="safety">Safety</option><option value="community">Community</option></select></label>
         <label>Dir: <select value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}><option value="desc">desc</option><option value="asc">asc</option></select></label>
-        <label>Bias filter:
+        <label>Incident category filter:
           <select multiple value={biasTypes} onChange={(e) => { const arr = Array.from(e.target.selectedOptions).map(o => o.value); setBiasTypes(arr); setOffset(0) }}>
-            <option value="anti-LGBTQ">anti-LGBTQ</option>
-            <option value="anti-Asian">anti-Asian</option>
-            <option value="anti-Black">anti-Black</option>
+            <option value="anti-LGBTQ">Against LGBTQ people</option>
+            <option value="anti-Asian">Against Asian people</option>
+            <option value="anti-Black">Against Black people</option>
           </select>
         </label>
       </div>

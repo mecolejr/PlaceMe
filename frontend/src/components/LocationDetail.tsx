@@ -86,8 +86,8 @@ export default function LocationDetail({ id, onClose }: { id: number | null; onC
             {data.stats?.hateCrimes?.byBias && data.stats.hateCrimes.byBias.length > 0 && (
               <div style={{ marginTop: 6 }}>
                 <MiniBarChart
-                  title="Hate crimes by bias"
-                  data={data.stats.hateCrimes.byBias.map(b => ({ label: b.biasType, value: b.incidents }))}
+                  title="Bias-motivated incidents by category"
+                  data={data.stats.hateCrimes.byBias.map(b => ({ label: humanizeBiasType(b.biasType), value: b.incidents }))}
                   colorFor={() => '#6a1b9a'}
                   legend={[{ label: 'Incidents', color: '#6a1b9a' }]}
                 />
@@ -98,6 +98,19 @@ export default function LocationDetail({ id, onClose }: { id: number | null; onC
       )}
     </div>
   )
+}
+
+function humanizeBiasType(biasType: string): string {
+  switch (biasType) {
+    case 'anti-LGBTQ':
+      return 'Against LGBTQ people'
+    case 'anti-Asian':
+      return 'Against Asian people'
+    case 'anti-Black':
+      return 'Against Black people'
+    default:
+      return biasType
+  }
 }
 
 
