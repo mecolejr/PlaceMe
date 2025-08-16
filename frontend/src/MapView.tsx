@@ -6,7 +6,7 @@ import { fetchApi } from './utils/fetchApi'
 
 type ScoreItem = { id: number; name: string; state: string; score: number }
 
-export default function MapView({ valuesDiversity, onSelectLocation }: { valuesDiversity: boolean; onSelectLocation?: (name: string) => void }) {
+export default function MapView({ valuesDiversity, onSelectLocation }: { valuesDiversity: boolean; onSelectLocation?: (p: { name: string; state: string }) => void }) {
   const [scores, setScores] = useState<ScoreItem[]>([])
   const [usStates, setUsStates] = useState<any>(null)
   const [scoresLoading, setScoresLoading] = useState<boolean>(false)
@@ -75,7 +75,7 @@ export default function MapView({ valuesDiversity, onSelectLocation }: { valuesD
       ;(layer as any).bindTooltip(`${name} (${st}) — ${score}/100`, { sticky: true })
     }
     if ((layer as any).on && onSelectLocation) {
-      ;(layer as any).on('click', () => onSelectLocation(name))
+      ;(layer as any).on('click', () => onSelectLocation({ name, state: st }))
     }
   }
 

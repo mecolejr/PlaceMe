@@ -2,3 +2,9 @@ name,state,bias_type,incidents
 Texas,TX,anti-LGBTQ,5
 California,CA,anti-LGBTQ,9
 New York,NY,anti-LGBTQ,7
+Texas,TX,anti-Asian,2
+California,CA,anti-Asian,3
+New York,NY,anti-Asian,4
+Texas,TX,anti-Black,6
+California,CA,anti-Black,5
+New York,NY,anti-Black,7

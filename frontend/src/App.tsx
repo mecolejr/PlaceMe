@@ -3,6 +3,8 @@ import MapView from './MapView'
 import ScoreBars from './components/ScoreBars'
 import Citations from './components/Citations'
 import Toast from './components/Toast'
+import LocationDetail from './components/LocationDetail'
+import AdminPanel from './components/AdminPanel'
 import { fetchApi } from './utils/fetchApi'
 
 export default function App() {
@@ -24,6 +26,9 @@ export default function App() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [offset, setOffset] = useState<number>(0)
   const [total, setTotal] = useState<number>(0)
+  const [detailId, setDetailId] = useState<number | null>(null)
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [biasTypes, setBiasTypes] = useState<string[]>([])
 
   useEffect(() => {
     fetchApi('/api/locations')
@@ -52,6 +57,22 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    // URL -> state (takes precedence over localStorage)
+    try {
+      const url = new URL(window.location.href)
+      const p = url.searchParams
+      if (p.has('location')) setLocation(p.get('location') || 'Texas')
+      if (p.has('valuesDiversity')) setValuesDiversity(p.get('valuesDiversity') === 'true')
+      if (p.has('minSafety')) setMinSafety(Number(p.get('minSafety') || ''))
+      if (p.has('minCommunity')) setMinCommunity(Number(p.get('minCommunity') || ''))
+      if (p.has('limit')) setLimit(Number(p.get('limit') || 10))
+      if (p.has('offset')) setOffset(Number(p.get('offset') || 0))
+      if (p.has('sortBy')) setSortBy(p.get('sortBy') as any)
+      if (p.has('sortDir')) setSortDir(p.get('sortDir') as any)
+      const bias = p.getAll('biasType')
+      if (bias && bias.length > 0) setBiasTypes(Array.from(new Set(bias)))
+    } catch {}
+
     // Load persisted UI settings
     try {
       const cfg = JSON.parse(localStorage.getItem('tp_ui') || '{}')
@@ -70,6 +91,27 @@ export default function App() {
     } catch {}
   }, [minSafety, minCommunity, limit, sortBy, sortDir])
 
+  // Sync state -> URL (shareable links)
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href)
+      const p = url.searchParams
+      p.set('location', location)
+      p.set('valuesDiversity', String(valuesDiversity))
+      if (minSafety !== '') p.set('minSafety', String(minSafety)); else p.delete('minSafety')
+      if (minCommunity !== '') p.set('minCommunity', String(minCommunity)); else p.delete('minCommunity')
+      p.set('limit', String(limit))
+      p.set('offset', String(offset))
+      p.set('sortBy', sortBy)
+      p.set('sortDir', sortDir)
+      // Replace biasType params
+      p.delete('biasType')
+      for (const b of biasTypes) p.append('biasType', b)
+      const next = `${url.pathname}?${p.toString()}`
+      window.history.replaceState(null, '', next)
+    } catch {}
+  }, [location, valuesDiversity, minSafety, minCommunity, limit, offset, sortBy, sortDir, biasTypes])
+
   useEffect(() => {
     const controller = new AbortController()
     const loadRanked = async () => {
@@ -77,6 +119,7 @@ export default function App() {
         const params = new URLSearchParams({ valuesDiversity: String(valuesDiversity), limit: String(limit), sortBy, sortDir, offset: String(offset) })
         if (minSafety !== '') params.set('minSafety', String(minSafety))
         if (minCommunity !== '') params.set('minCommunity', String(minCommunity))
+        for (const b of biasTypes) params.append('biasType', b)
         const res = await fetchApi(`/api/profile-scores?${params.toString()}`, { signal: controller.signal })
         const data = await res.json()
         if (res.ok) {
@@ -108,6 +151,7 @@ export default function App() {
       if (minSafety !== '') rankedParams.set('minSafety', String(minSafety))
       if (minCommunity !== '') rankedParams.set('minCommunity', String(minCommunity))
       if (forceRefresh) rankedParams.set('nocache', 'true')
+      for (const b of biasTypes) rankedParams.append('biasType', b)
       const [r1, r2] = await Promise.all([
         fetchApi(`/api/score?${params.toString()}`),
         fetchApi(`/api/profile-scores?${rankedParams.toString()}`)
@@ -167,12 +211,30 @@ export default function App() {
           <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} />
           Force refresh
         </label>
+        <button type="button" onClick={() => setShowAdmin(true)} style={{ marginLeft: 8 }}>Admin</button>
+        <button type="button" onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(window.location.href)
+            setToast('Link copied')
+          } catch {
+            const ta = document.createElement('textarea');
+            ta.value = window.location.href; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
+            setToast('Link copied')
+          }
+        }}>Copy link</button>
       </form>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
         <label>Min safety: <input style={{ width: 60 }} type="number" min={0} max={100} value={minSafety} onChange={(e) => setMinSafety(e.target.value === '' ? '' : Number(e.target.value))} /></label>
         <label>Min community: <input style={{ width: 60 }} type="number" min={0} max={100} value={minCommunity} onChange={(e) => setMinCommunity(e.target.value === '' ? '' : Number(e.target.value))} /></label>
         <label>Sort by: <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}><option value="score">Score</option><option value="safety">Safety</option><option value="community">Community</option></select></label>
         <label>Dir: <select value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}><option value="desc">desc</option><option value="asc">asc</option></select></label>
+        <label>Bias filter:
+          <select multiple value={biasTypes} onChange={(e) => { const arr = Array.from(e.target.selectedOptions).map(o => o.value); setBiasTypes(arr); setOffset(0) }}>
+            <option value="anti-LGBTQ">anti-LGBTQ</option>
+            <option value="anti-Asian">anti-Asian</option>
+            <option value="anti-Black">anti-Black</option>
+          </select>
+        </label>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
@@ -233,6 +295,9 @@ export default function App() {
                     <Citations items={r.citations} />
                   </div>
                 )}
+                <div style={{ marginTop: 6 }}>
+                  <button onClick={() => setDetailId(r.id)}>View details</button>
+                </div>
               </li>
             ))}
           </ol>
@@ -248,7 +313,13 @@ export default function App() {
           </div>
         </div>
       )}
-      <MapView valuesDiversity={valuesDiversity} onSelectLocation={(n) => setLocation(n)} />
+      {detailId != null && <LocationDetail id={detailId} onClose={() => setDetailId(null)} />}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      <MapView valuesDiversity={valuesDiversity} onSelectLocation={(p) => {
+        setLocation(p.name)
+        const found = locations.find(l => l.state === p.state || l.name === p.name)
+        if (found) setDetailId(found.id)
+      }} />
     </div>
   )
 }

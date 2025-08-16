@@ -84,6 +84,25 @@ async function main() {
       })
     }
   }
+
+  // Policy
+  const policyFile = path.join(root, 'phase2_policy.csv')
+  if (fs.existsSync(policyFile)) {
+    const [h, ...rows] = csv(policyFile)
+    const ix = {
+      name: h.indexOf('name'),
+      state: h.indexOf('state'),
+      score: h.indexOf('policy_score'),
+    }
+    for (const r of rows) {
+      const name = r[ix.name]
+      const state = r[ix.state]
+      const policyScore = Number(r[ix.score] || 0)
+      const loc = await prisma.location.findFirst({ where: { name, state } })
+      if (!loc) continue
+      await prisma.location.update({ where: { id: loc.id }, data: { policyScore } })
+    }
+  }
 }
 
 main().finally(async () => prisma.$disconnect())

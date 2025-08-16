@@ -1,0 +1,4 @@
+name,state,policy_score
+Texas,TX,0.40
+California,CA,0.90
+New York,NY,0.85

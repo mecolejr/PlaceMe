@@ -51,6 +51,16 @@ curl -s http://localhost:4000/api/admin/dataset | jq
 /Users/1stowner/Projects/trueplace/scripts/preview.sh
 ```
 - One-command dev (ensures backend + local GeoJSON):
+- Live data (optional, keys required):
+```bash
+# Set keys in backend/.env
+FBI_API_KEY=...
+CENSUS_API_KEY=...
+
+cd backend
+pnpm data:live
+```
+If keys are not set, live importers log and skip; CSV stubs remain in use.
 ```bash
 /Users/1stowner/Projects/trueplace/scripts/dev.sh
 ```

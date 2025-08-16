@@ -16,7 +16,9 @@
     "data:stubs": "tsx src/scripts/fetch_fbi.ts && tsx src/scripts/fetch_census.ts",
     "data:import": "tsx src/scripts/import_basic_data.ts",
     "data:refresh": "pnpm data:stubs && pnpm data:import",
-    "data:refresh:all": "pnpm data:refresh && pnpm data:phase2 && curl -s http://localhost:4000/api/admin/dataset | jq -r '.fingerprint' || true"
+    "data:refresh:all": "pnpm data:refresh && pnpm data:phase2 && pnpm data:live && curl -s http://localhost:4000/api/admin/dataset | jq -r '.fingerprint' || true",
+    "data:live": "tsx src/scripts/import_live.ts",
+    "data:refresh:nightly": "pnpm data:refresh && pnpm data:phase2 && tsx src/scripts/fingerprint.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.16.1",
@@ -30,6 +32,8 @@
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.20.4",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^2.0.16"
   }
 }

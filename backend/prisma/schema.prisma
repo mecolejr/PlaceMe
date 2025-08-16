@@ -14,6 +14,8 @@ model Location {
   crimeRate       Float?
   hateCrimeIndex  Float?
   diversityIndex  Float?
+  policyScore     Float?
+  updatedAt       DateTime @default(now()) @updatedAt
 
   @@unique([name, state], name: "name_state")
 
@@ -28,6 +30,7 @@ model HateCrime {
   locationId Int
   biasType   String
   incidents  Int
+  updatedAt  DateTime @default(now()) @updatedAt
 
   location   Location @relation(fields: [locationId], references: [id])
 
@@ -39,6 +42,7 @@ model CrimeStats {
   locationId   Int
   violentRate  Float?
   propertyRate Float?
+  updatedAt    DateTime @default(now()) @updatedAt
 
   location     Location @relation(fields: [locationId], references: [id])
 
@@ -51,9 +55,16 @@ model Demographics {
   diversity    Float?
   // Optional JSON for group shares (e.g., {"group":"share"})
   groupShares  Json?
+  updatedAt    DateTime @default(now()) @updatedAt
 
   location     Location @relation(fields: [locationId], references: [id])
 
   @@unique([locationId])
+}
+
+model Meta {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
 }
 

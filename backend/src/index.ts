@@ -111,6 +111,9 @@ app.get('/api/profile-scores', async (req, res) => {
     const offset = req.query.offset ? Math.max(0, Number(req.query.offset)) : 0
     const sortBy = (String(req.query.sortBy || 'score') as 'score' | 'safety' | 'community')
     const sortDir = (String(req.query.sortDir || 'desc') as 'asc' | 'desc')
+    const biasTypes = ([] as string[]).concat(req.query.biasType || []).flatMap((v) =>
+      typeof v === 'string' ? [v] : Array.isArray(v) ? v : []
+    )
 
     const fingerprint = await computeDatasetFingerprint()
     const keyObj = { valuesDiversity, minSafety, minCommunity, sortBy, sortDir }
@@ -124,11 +127,21 @@ app.get('/api/profile-scores', async (req, res) => {
     }
 
     const records = await prisma.location.findMany()
+    let biasIncidentByLoc = new Map<number, number>()
+    if (biasTypes.length > 0) {
+      const grouped = await prisma.hateCrime.groupBy({
+        by: ['locationId'],
+        where: { biasType: { in: biasTypes } },
+        _sum: { incidents: true },
+      })
+      for (const g of grouped) biasIncidentByLoc.set(g.locationId as number, (g._sum.incidents as number) || 0)
+    }
     let results = records.map((r) => ({
       id: r.id,
       name: r.name,
       state: r.state,
       ...computeTruePlaceScore(r, { valuesDiversity }),
+      ...(biasTypes.length > 0 ? { biasIncidents: biasIncidentByLoc.get(r.id) } : {}),
     }))
     // Filter
     if (typeof minSafety === 'number') {
@@ -136,6 +149,10 @@ app.get('/api/profile-scores', async (req, res) => {
     }
     if (typeof minCommunity === 'number') {
       results = results.filter((r) => r.subScores?.community >= minCommunity)
+    }
+    if (biasTypes.length > 0) {
+      // Only keep locations that have data for the requested biases
+      results = results.filter((r: any) => typeof r.biasIncidents === 'number')
     }
     // Sort
     results.sort((a, b) => {
@@ -173,6 +190,12 @@ app.get('/api/admin/dataset', async (req, res) => {
       prisma.crimeStats.aggregate({ _sum: { propertyRate: true } }),
     ])
 
+    const [hateMax, crimeMax, demoMax] = await Promise.all([
+      prisma.hateCrime.aggregate({ _max: { updatedAt: true } }),
+      prisma.crimeStats.aggregate({ _max: { updatedAt: true } }),
+      prisma.demographics.aggregate({ _max: { updatedAt: true } }),
+    ])
+
     const citations = [
       'Safety: FBI Crime Data API (UCR/Hate Crimes)',
       'Community: U.S. Census Bureau ACS (Diversity Index)'
@@ -184,6 +207,11 @@ app.get('/api/admin/dataset', async (req, res) => {
         hateCrimesIncidents: hateSum._sum.incidents ?? 0,
         violentRate: violentSum._sum.violentRate ?? 0,
         propertyRate: propertySum._sum.propertyRate ?? 0,
+      },
+      lastUpdated: {
+        hateCrimes: hateMax._max.updatedAt,
+        crimeStats: crimeMax._max.updatedAt,
+        demographics: demoMax._max.updatedAt,
       },
       citations,
     }
@@ -200,8 +228,46 @@ app.get('/api/admin/dataset', async (req, res) => {
   }
 })
 
-app.listen(port, () => {
-  console.log(`Backend listening on http://localhost:${port}`);
-});
+// Location detail
+app.get('/api/locations/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' })
+    const loc = await prisma.location.findUnique({ where: { id } })
+    if (!loc) return res.status(404).json({ error: 'not found' })
+
+    const [hateCrimes, crimeStats, demographics] = await Promise.all([
+      prisma.hateCrime.findMany({ where: { locationId: id }, select: { biasType: true, incidents: true } }),
+      prisma.crimeStats.findUnique({ where: { locationId: id }, select: { violentRate: true, propertyRate: true } }),
+      prisma.demographics.findUnique({ where: { locationId: id }, select: { diversity: true } }),
+    ])
+
+    const { score, breakdown, subScores, citations } = computeTruePlaceScore(loc, {})
+    res.json({
+      id: loc.id,
+      name: loc.name,
+      state: loc.state,
+      score,
+      breakdown,
+      subScores,
+      citations,
+      stats: {
+        hateCrimes: { byBias: hateCrimes },
+        crimeStats,
+        demographics,
+      },
+    })
+  } catch {
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+if (!process.env.VITEST_WORKER_ID) {
+  app.listen(port, () => {
+    console.log(`Backend listening on http://localhost:${port}`);
+  });
+}
+
+export default app
 
 
