@@ -16,7 +16,7 @@ export default function App() {
   const [ranked, setRanked] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [stateFilter, setStateFilter] = useState<string>('')
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; variant?: 'error'|'success' } | null>(null)
   const [cacheMeta, setCacheMeta] = useState<{ hit: boolean; key: string; ttlMs: number } | null>(null)
   const [forceRefresh, setForceRefresh] = useState(false)
   const [minSafety, setMinSafety] = useState<number | ''>('')
@@ -215,11 +215,11 @@ export default function App() {
         <button type="button" onClick={async () => {
           try {
             await navigator.clipboard.writeText(window.location.href)
-            setToast('Link copied')
+            setToast({ message: 'Link copied', variant: 'success' })
           } catch {
             const ta = document.createElement('textarea');
             ta.value = window.location.href; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
-            setToast('Link copied')
+            setToast({ message: 'Link copied', variant: 'success' })
           }
         }}>Copy link</button>
       </form>
@@ -237,7 +237,7 @@ export default function App() {
         </label>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      {toast && <Toast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />}
       {result && (
         <div style={{ marginTop: 16 }}>
           <h2>
@@ -254,7 +254,19 @@ export default function App() {
           {Array.isArray(result.citations) && result.citations.length > 0 && <Citations items={result.citations} />}
         </div>
       )}
-      {ranked.length > 0 && (
+      {loading && (
+        <div style={{ marginTop: 16 }}>
+          <h3>Top matches</h3>
+          <ol>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i} style={{ marginBottom: 8 }}>
+                <div style={{ height: 14, width: 240, background: '#eee', borderRadius: 4 }} />
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      {(!loading && ranked.length > 0) && (
         <div style={{ marginTop: 24 }}>
           <h3>Top matches</h3>
           {cacheMeta && (
@@ -311,6 +323,11 @@ export default function App() {
               {[10,20,50,100].map(n => <option key={n} value={n}>{n}</option>)}
             </select></label>
           </div>
+        </div>
+      )}
+      {(!loading && ranked.length === 0) && (
+        <div style={{ marginTop: 24, opacity: 0.8 }}>
+          <em>No matches. Try relaxing filters or selecting different bias types.</em>
         </div>
       )}
       {detailId != null && <LocationDetail id={detailId} onClose={() => setDetailId(null)} />}

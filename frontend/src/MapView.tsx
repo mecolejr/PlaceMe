@@ -60,10 +60,10 @@ export default function MapView({ valuesDiversity, onSelectLocation }: { valuesD
     const color = scoreToColor(score)
     return {
       fillColor: color,
-      weight: 1,
+      weight: 1.25,
       opacity: 1,
-      color: '#999',
-      fillOpacity: 0.7,
+      color: '#777',
+      fillOpacity: 0.72,
     }
   }
 
@@ -148,12 +148,10 @@ function Legend() {
     control.onAdd = () => {
       const div = L.DomUtil.create('div', 'tp-legend')
       div.innerHTML = `
-        <div style="background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font: 12px/1.2 system-ui, sans-serif;">
-          <div style="margin-bottom:4px; font-weight:600;">Score</div>
-          <div style="width:160px; height:10px; background: linear-gradient(90deg, rgb(255,0,120), rgb(0,180,120));"></div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>Low</span><span>High</span>
-          </div>
+        <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font:12px/1.3 system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-weight:600">Score</span><span style="opacity:.7">(0–100)</span></div>
+          <div style="width:180px;height:10px;border-radius:6px;overflow:hidden;background:linear-gradient(90deg, rgb(255,60,80), rgb(0,180,120))"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;opacity:.8"><span>Low</span><span>High</span></div>
         </div>
       `
       return div
