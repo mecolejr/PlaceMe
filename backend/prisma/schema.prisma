@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -54,7 +54,7 @@ model Demographics {
   locationId   Int
   diversity    Float?
   // Optional JSON for group shares (e.g., {"group":"share"})
-  groupShares  Json?
+  groupShares  String?
   updatedAt    DateTime @default(now()) @updatedAt
 
   location     Location @relation(fields: [locationId], references: [id])
