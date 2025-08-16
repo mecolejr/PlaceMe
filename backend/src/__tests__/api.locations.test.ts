@@ -1,6 +1,5 @@
 import request from 'supertest'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import app from '../index'
 
 const mockPrisma: any = {
   location: {
@@ -17,15 +16,15 @@ const mockPrisma: any = {
   },
 }
 
-vi.mock('@prisma/client', () => {
-  return {
-    PrismaClient: class {
-      constructor() {
-        return mockPrisma
-      }
-    },
-  }
-})
+vi.mock('@prisma/client', () => ({
+  PrismaClient: class {
+    constructor() {
+      return mockPrisma
+    }
+  },
+}))
+
+const { default: app } = await import('../index')
 
 describe('GET /api/locations/:id', () => {
   beforeEach(() => {

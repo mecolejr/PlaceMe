@@ -46,6 +46,7 @@ pnpm data:refresh:all
 ```bash
 curl -s http://localhost:4000/api/admin/dataset | jq
 ```
+- Protect admin endpoint with a token (optional): set `ADMIN_TOKEN=your_token` in `backend/.env` and include header `x-admin-token: your_token` in requests.
 - One-command preview (ensures backend + local GeoJSON):
 ```bash
 /Users/1stowner/Projects/trueplace/scripts/preview.sh
@@ -64,6 +65,12 @@ If keys are not set, live importers log and skip; CSV stubs remain in use.
 ```bash
 /Users/1stowner/Projects/trueplace/scripts/dev.sh
 ```
+
+## Scoring Weights (current defaults)
+- Safety: 25%–40% (varies with profile)
+- Community (Diversity): 45% (60% if `valuesDiversity=true`)
+- Policy: 15%
+All sub-scores are normalized 0–100 then combined.
 
 ## Quick smoke
 - Click “Show My Score” for a seeded location (Texas/California/New York)
